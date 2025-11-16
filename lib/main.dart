@@ -33,6 +33,11 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _errorMessage; // Menyimpa pesan error
   StreamSubscription<Position>? _positionStream; // Penyimpan stream
   String? currentAddress; // Menyimpan alamat dari koordinat
+  String? distanceToPNB; // Menyimpan jarak ke PNB
+
+  // Titik tetap PNB
+  final double _pnbLatitut = -8.2333104;
+  final double _pnbLongitut = 114.2031668;
 
   @override
   void dispose() {
@@ -93,6 +98,22 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _calculateDistaneToPNB(Position position) {
+    double distance = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      _pnbLatitut,
+      _pnbLongitut,
+    );
+
+    //Jarak dalam meter ke kilometer
+    double distanceInKm = distance / 1000;
+
+    setState(() {
+      distanceToPNB = distanceInKm.toStringAsFixed(2) + " km";
+    });
+  }
+
   void _handleGetLocation() async {
     try {
       Position position = await _getPermissionAndLocation();
@@ -102,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
 
       getAddressFromLatLng(position); // Dapatkan alamat dari koordinat
+      _calculateDistaneToPNB(position);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString(); // Tampilkan error di UI
@@ -128,6 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _errorMessage = null;
             });
             getAddressFromLatLng(position); // Dapatkan alamat dari koordinat
+            _calculateDistaneToPNB(position); // Hitung jarak ke PNB
           });
     } catch (e) {
       setState(() {
@@ -197,6 +220,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
+
+                // Tampilkan jarak ke PNB
+                if (distanceToPNB != null)
+                  Text(
+                    "Jarak ke pnb: $distanceToPNB",
+                    style: TextStyle(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+
                 //
                 ElevatedButton.icon(
                   icon: Icon(Icons.location_searching),
